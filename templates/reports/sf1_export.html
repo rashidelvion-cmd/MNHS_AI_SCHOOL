@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Generate SF1{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h2>Generate SF1 &mdash; School Register (SHS)</h2>
+    <p class="text-muted">
+        Select a School Year, Grade Level, Section and Semester to download
+        the official <strong>SF1-SHS</strong> Excel file, filled from the
+        enrolled learners' records.
+    </p>
+
+    <form method="POST" class="col-md-6">
+
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        {{ form.as_p }}
+
+        <div class="d-flex gap-2 mt-2">
+          <button type="submit" class="btn btn-success">
+            <i class="fa-solid fa-file-excel me-1"></i> Download SF1 Excel (.xlsx)
+          </button>
+          <button type="submit"
+                  formaction="{% url 'sf1_pdf_export' %}"
+                  class="btn btn-danger">
+            <i class="fa-solid fa-file-pdf me-1"></i> Print SF1 PDF (.pdf)
+          </button>
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

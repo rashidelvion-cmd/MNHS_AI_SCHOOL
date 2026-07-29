@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Generate SF9{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h2>Generate SF9 &mdash; Learner's Performance Report (SHS)</h2>
+    <p class="text-muted">
+        Select the learner and school year to download the official
+        <strong>SF9</strong> Excel report card, filled from the computed
+        E-Class Record grades and the recorded attendance.
+        The signature and transfer fields below are optional &mdash; leave
+        them blank to sign by hand.
+    </p>
+
+    <form method="POST" class="col-md-6">
+
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        {{ form.as_p }}
+
+        <button type="submit" class="btn btn-primary">
+            Download SF9 (.xlsx)
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,12 @@
+asgiref==3.11.1
+Django==6.0.6
+pillow==12.3.0
+psycopg==3.3.4
+psycopg-binary==3.3.4
+python-dotenv==1.2.2
+reportlab==4.4.10
+sqlparse==0.5.5
+tzdata==2026.2
+openpyxl==3.1.5
+xlrd==2.0.1
+qrcode==8.0

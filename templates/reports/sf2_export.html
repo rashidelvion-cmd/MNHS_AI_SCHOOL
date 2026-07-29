@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Generate SF2{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h2>Generate SF2 &mdash; School Register (SHS)</h2>
+    <p class="text-muted">
+        Select the Section and Reporting Month to download the official
+        <strong>SF2-SHS</strong> Excel file, filled from the recorded daily
+        attendance and enrolled learners.
+    </p>
+
+    <form method="POST" class="col-md-6">
+
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        {{ form.as_p }}
+
+        <button type="submit" class="btn btn-primary">
+            Download SF2 (.xlsx)
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}

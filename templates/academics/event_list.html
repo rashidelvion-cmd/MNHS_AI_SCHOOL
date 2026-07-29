@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}School Events{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">
+        <i class="fa-solid fa-calendar-days me-2" style="color:#7a1020;"></i>
+        School Events &amp; Meetings
+      </h2>
+      <p class="text-muted mb-0">Notifications for all school community members.</p>
+    </div>
+    {% if can_manage %}
+    <a href="{% url 'event_create' %}" class="btn fw-bold text-white"
+       style="background:#1a5c2e;">
+      <i class="fa-solid fa-plus me-2"></i>New Event
+    </a>
+    {% endif %}
+  </div>
+
+  {# ── Upcoming events ── #}
+  <h5 class="fw-semibold mb-3 text-success">
+    <i class="fa-solid fa-clock me-1"></i> Upcoming
+    <span class="badge bg-success ms-1">{{ upcoming|length }}</span>
+  </h5>
+
+  {% if upcoming %}
+  <div class="row g-3 mb-5">
+    {% for event in upcoming %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="badge text-white" style="background:#1a5c2e;">
+              {{ event.event_date|date:"M d, Y" }}
+              {% if event.event_time %}· {{ event.event_time|time:"g:i A" }}{% endif %}
+            </span>
+            {% if can_manage %}
+            <div class="d-flex gap-1">
+              <a href="{% url 'event_edit' event.pk %}"
+                 class="btn btn-sm btn-outline-secondary py-0">
+                <i class="fa-solid fa-pen"></i>
+              </a>
+              <form method="post" action="{% url 'event_delete' event.pk %}"
+                    onsubmit="return confirm('Delete this event?');"
+                    class="d-inline">
+                {% csrf_token %}
+                <button class="btn btn-sm btn-outline-danger py-0" type="submit">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </form>
+            </div>
+            {% endif %}
+          </div>
+          <h6 class="fw-bold mb-1">{{ event.title }}</h6>
+          {% if event.description %}
+          <p class="text-muted small mb-0">{{ event.description }}</p>
+          {% endif %}
+          {% if event.created_by %}
+          <p class="text-muted" style="font-size:.75rem;margin-top:8px;margin-bottom:0;">
+            Posted by {{ event.created_by.get_full_name|default:event.created_by.username }}
+          </p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="alert alert-info mb-5">No upcoming events at this time.</div>
+  {% endif %}
+
+  {# ── Past events ── #}
+  {% if past %}
+  <h5 class="fw-semibold mb-3 text-muted">
+    <i class="fa-solid fa-history me-1"></i> Past Events
+  </h5>
+  <div class="table-responsive">
+    <table class="table table-sm table-bordered align-middle text-muted">
+      <thead class="table-light">
+        <tr>
+          <th>Date</th>
+          <th>Title</th>
+          <th>Description</th>
+          {% if can_manage %}<th></th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for event in past %}
+        <tr>
+          <td class="small">{{ event.event_date|date:"M d, Y" }}</td>
+          <td>{{ event.title }}</td>
+          <td class="small">{{ event.description|truncatechars:80 }}</td>
+          {% if can_manage %}
+          <td>
+            <form method="post" action="{% url 'event_delete' event.pk %}"
+                  onsubmit="return confirm('Delete this event?');">
+              {% csrf_token %}
+              <button class="btn btn-sm btn-outline-danger py-0" type="submit">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </form>
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,528 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard — MNHS
+  {# School Events & Notifications — R1/R2/R3 (Messenger 7 Jul) #}
+  {% if upcoming_events %}
+  <div class="mt-4">
+    <h6 class="fw-bold mb-3">
+      <i class="fa-solid fa-calendar-days me-1" style="color:#7a1020;"></i>
+      Upcoming School Events
+      <a href="{% url 'event_list' %}" class="btn btn-sm btn-outline-secondary ms-2" style="font-size:.75rem;">View All</a>
+    </h6>
+    <div class="row g-2">
+      {% for ev in upcoming_events %}
+      <div class="col-12 col-md-6">
+        <div class="d-flex align-items-start gap-2 p-2 border rounded bg-white">
+          <span class="badge text-white mt-1 flex-shrink-0" style="background:#1a5c2e;font-size:.7rem;">
+            {{ ev.event_date|date:"M d" }}
+          </span>
+          <div>
+            <div class="fw-semibold small">{{ ev.title }}</div>
+            {% if ev.description %}<div class="text-muted" style="font-size:.75rem;">{{ ev.description|truncatechars:60 }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <div class="mt-4">
+    <h6 class="fw-bold mb-2">
+      <i class="fa-solid fa-calendar-days me-1" style="color:#7a1020;"></i>
+      Upcoming School Events
+      <a href="{% url 'event_list' %}" class="btn btn-sm btn-outline-secondary ms-2" style="font-size:.75rem;">View All</a>
+    </h6>
+    <p class="text-muted small">No upcoming events.</p>
+  </div>
+  {% endif %}
+
+{% endblock %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+.dash-banner{background:linear-gradient(135deg,#1a3c6b 0%,#2d6a4f 100%);border-radius:16px;padding:36px 32px;color:#fff;margin-bottom:28px;}
+.stat-card{border:none;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.1);transition:.25s;}
+.stat-card:hover{transform:translateY(-4px);}
+.stat-card .num{font-size:2rem;font-weight:700;}
+.chart-card{border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.08);padding:20px;}
+.quick-links a{display:inline-block;margin:4px;border-radius:8px;}
+</style>
+
+{# ======================================================= #}
+{# BANNER — common to every role #}
+{# ======================================================= #}
+<div class="dash-banner mb-4">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div>
+      <h2 class="fw-bold mb-1">Welcome, {{ request.user.get_full_name|default:request.user.username }}</h2>
+      <p class="mb-0 opacity-75">MNHS AI School Forms Management System</p>
+    </div>
+    <div class="text-end">
+      <span class="badge bg-warning text-dark fs-6">{{ request.user.get_role_display }}</span>
+      {% if sy %}<div class="small mt-1 opacity-75">Active SY: {{ sy }}</div>{% endif %}
+    </div>
+  </div>
+</div>
+
+{# ======================================================= #}
+{% if role == "admin" %}
+{# ======================================================= #}
+
+<div class="row g-3 mb-4">
+  {% include "dashboard/_stat.html" with label="Total Students"  value=total_students  color="primary" %}
+  {% include "dashboard/_stat.html" with label="Total Teachers"  value=total_teachers  color="success" %}
+  {% include "dashboard/_stat.html" with label="Total Sections"  value=total_sections  color="info" %}
+  {% include "dashboard/_stat.html" with label="Total Users"     value=total_users     color="warning" %}
+  {% include "dashboard/_stat.html" with label="Today's Attendance" value=attendance_rate color="secondary" %}
+  {% include "dashboard/_stat.html" with label="Promotion Rate"  value=promotion_rate  color="success" %}
+  {% include "dashboard/_stat.html" with label="Dropout Rate"    value=dropout_rate    color="danger" %}
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-5">
+    <div class="card chart-card h-100">
+      <h6 class="fw-bold mb-3">Enrollment Trend</h6>
+      <canvas id="enrollChart" height="200"></canvas>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card chart-card h-100">
+      <h6 class="fw-bold mb-3">Grade Distribution</h6>
+      <canvas id="gradeChart" height="200"></canvas>
+    </div>
+  </div>
+  <div class="col-md-3 d-flex flex-column gap-2">
+    <div class="card chart-card flex-fill">
+      <h6 class="fw-bold mb-2">Quick Actions</h6>
+      <div class="quick-links">
+        <a href="{% url 'sf1_import' %}" class="btn btn-sm btn-outline-primary">SF1 Import</a>
+        <a href="{% url 'sf1_export' %}" class="btn btn-sm btn-outline-primary">SF1 Export</a>
+        <a href="{% url 'sf2_export' %}" class="btn btn-sm btn-outline-success">SF2 Export</a>
+        <a href="{% url 'sf9_select' %}" class="btn btn-sm btn-outline-warning">SF9</a>
+        <a href="{% url 'sf10_export' %}" class="btn btn-sm btn-outline-danger">SF10</a>
+        <a href="{% url 'ecr_select' %}" class="btn btn-sm btn-outline-secondary">ECR</a>
+        <a href="{% url 'attendance_mark_select' %}" class="btn btn-sm btn-outline-info">Mark Attendance</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card chart-card mb-4">
+  <h6 class="fw-bold mb-3">Attendance Trend (Last 30 Days)</h6>
+  <canvas id="attChart" height="100"></canvas>
+</div>
+
+<script>
+new Chart(document.getElementById('enrollChart'),{type:'bar',data:{labels:{{ enroll_labels }},datasets:[{label:'Students',data:{{ enroll_data }},backgroundColor:'rgba(13,110,253,.7)'}]},options:{responsive:true,plugins:{legend:{display:false}}}});
+new Chart(document.getElementById('gradeChart'),{type:'doughnut',data:{labels:{{ grade_labels }},datasets:[{data:{{ grade_data }},backgroundColor:['#dc3545','#fd7e14','#ffc107','#198754','#0d6efd']}]},options:{responsive:true}});
+new Chart(document.getElementById('attChart'),{type:'line',data:{labels:{{ att_labels }},datasets:[{label:'Present',data:{{ att_present }},borderColor:'#198754',backgroundColor:'rgba(25,135,84,.1)',fill:true},{label:'Absent',data:{{ att_absent }},borderColor:'#dc3545',backgroundColor:'rgba(220,53,69,.1)',fill:true}]},options:{responsive:true}});
+</script>
+
+{# ======================================================= #}
+{% elif role == "principal" %}
+{# ======================================================= #}
+
+<div class="row g-3 mb-4">
+  {% include "dashboard/_stat.html" with label="Total Students"     value=total_students  color="primary" %}
+  {% include "dashboard/_stat.html" with label="Total Teachers"     value=total_teachers  color="success" %}
+  {% include "dashboard/_stat.html" with label="Today's Attendance" value=attendance_rate color="info" %}
+  {% include "dashboard/_stat.html" with label="Promotion Rate"     value=promotion_rate  color="success" %}
+  {% include "dashboard/_stat.html" with label="Dropout Rate"       value=dropout_rate    color="danger" %}
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-6">
+    <div class="card chart-card h-100">
+      <h6 class="fw-bold mb-3">Attendance Trend (Last 30 Days)</h6>
+      <canvas id="attChart" height="200"></canvas>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card chart-card h-100">
+      <h6 class="fw-bold mb-3">Grade Distribution</h6>
+      <canvas id="gradeChart" height="200"></canvas>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="card chart-card h-100">
+      <h6 class="fw-bold mb-2">Reports</h6>
+      <div class="quick-links d-flex flex-column gap-2">
+        <a href="{% url 'sf9_select' %}" class="btn btn-sm btn-outline-warning">SF9</a>
+        <a href="{% url 'sf10_export' %}" class="btn btn-sm btn-outline-danger">SF10</a>
+        <a href="{% url 'sf1_export' %}" class="btn btn-sm btn-outline-primary">SF1</a>
+        <a href="{% url 'sf2_export' %}" class="btn btn-sm btn-outline-success">SF2</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+new Chart(document.getElementById('attChart'),{type:'line',data:{labels:{{ att_labels }},datasets:[{label:'Present',data:{{ att_present }},borderColor:'#198754',backgroundColor:'rgba(25,135,84,.1)',fill:true},{label:'Absent',data:{{ att_absent }},borderColor:'#dc3545',backgroundColor:'rgba(220,53,69,.1)',fill:true}]},options:{responsive:true}});
+new Chart(document.getElementById('gradeChart'),{type:'doughnut',data:{labels:{{ grade_labels }},datasets:[{data:{{ grade_data }},backgroundColor:['#dc3545','#fd7e14','#ffc107','#198754','#0d6efd']}]},options:{responsive:true}});
+</script>
+
+{# ======================================================= #}
+{% elif role == "ict_coordinator" %}
+{# ======================================================= #}
+
+<div class="row g-3 mb-4">
+  {% include "dashboard/_stat.html" with label="Total Students"     value=total_students     color="primary" %}
+  {% include "dashboard/_stat.html" with label="All Teachers"       value=total_teachers     color="success" %}
+  {% include "dashboard/_stat.html" with label="Advisers"           value=adviser_count      color="info" %}
+  {% include "dashboard/_stat.html" with label="Subject Teachers"   value=subj_teacher_count color="warning" %}
+  {% include "dashboard/_stat.html" with label="Total Sections"     value=total_sections     color="secondary" %}
+  {% include "dashboard/_stat.html" with label="Today's Attendance" value=attendance_rate    color="dark" %}
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-6">
+    <div class="card chart-card">
+      <h6 class="fw-bold mb-3">Enrollment Trend</h6>
+      <canvas id="enrollChart" height="200"></canvas>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card chart-card">
+      <h6 class="fw-bold mb-3">Attendance Trend (Last 30 Days)</h6>
+      <canvas id="attChart" height="200"></canvas>
+    </div>
+  </div>
+</div>
+
+{% if sections_sf1 %}
+<div class="card chart-card mb-4">
+  <h6 class="fw-bold mb-3">SF1 Imported Sections ({{ sy }})</h6>
+  <div class="table-responsive">
+    <table class="table table-sm table-bordered align-middle">
+      <thead class="table-light"><tr><th>Section</th><th>Students Enrolled</th></tr></thead>
+      <tbody>
+        {% for row in sections_sf1 %}
+        <tr><td>{{ row.section__name }}</td><td>{{ row.n }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<div class="quick-links mb-4">
+  <a href="{% url 'sf1_import' %}" class="btn btn-outline-primary">SF1 Import</a>
+  <a href="{% url 'sf1_export' %}" class="btn btn-outline-primary">SF1 Export</a>
+  <a href="{% url 'sf2_export' %}" class="btn btn-outline-success">SF2 Export</a>
+  <a href="{% url 'sf9_select' %}" class="btn btn-outline-warning">SF9</a>
+  <a href="{% url 'sf10_export' %}" class="btn btn-outline-danger">SF10</a>
+</div>
+
+<script>
+new Chart(document.getElementById('enrollChart'),{type:'bar',data:{labels:{{ enroll_labels }},datasets:[{label:'Students',data:{{ enroll_data }},backgroundColor:'rgba(13,110,253,.7)'}]},options:{responsive:true,plugins:{legend:{display:false}}}});
+new Chart(document.getElementById('attChart'),{type:'line',data:{labels:{{ att_labels }},datasets:[{label:'Present',data:{{ att_present }},borderColor:'#198754',backgroundColor:'rgba(25,135,84,.1)',fill:true},{label:'Absent',data:{{ att_absent }},borderColor:'#dc3545',backgroundColor:'rgba(220,53,69,.1)',fill:true}]},options:{responsive:true}});
+</script>
+
+{# ======================================================= #}
+{% elif role == "adviser" %}
+{# ======================================================= #}
+
+<div class="card p-3 mb-4">
+  <form method="get" class="row g-2 align-items-end">
+    <div class="col-auto"><label class="form-label fw-semibold">Select Your Advisory Section</label>
+      <select name="section" class="form-select">
+        <option value="">— choose section —</option>
+        {% for sec in sections %}
+          <option value="{{ sec.pk }}" {% if sec == selected_section %}selected{% endif %}>
+            {{ sec.grade_level }} — {{ sec.name }} {% if sec.track_strand %}({{ sec.track_strand }}){% endif %}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto"><button class="btn btn-primary">View</button></div>
+  </form>
+</div>
+
+{% if selected_section %}
+<div class="row g-3 mb-4">
+  {% include "dashboard/_stat.html" with label="Students in Section" value=student_count    color="primary" %}
+  {% include "dashboard/_stat.html" with label="Today's Attendance"  value=attendance_rate color="success" %}
+  {% include "dashboard/_stat.html" with label="Grades Entered"      value=grades_entered  color="info" %}
+</div>
+
+<div class="quick-links mb-4">
+  <a href="{% url 'sf1_import' %}" class="btn btn-outline-primary">Import SF1</a>
+  <a href="{% url 'sf2_export' %}" class="btn btn-outline-success">Export SF2</a>
+  <a href="{% url 'sf9_select' %}" class="btn btn-outline-warning">SF9 Report Card</a>
+  <a href="{% url 'sf10_export' %}" class="btn btn-outline-danger">SF10</a>
+  <a href="{% url 'attendance_mark_select' %}" class="btn btn-outline-info">Mark Attendance</a>
+</div>
+
+{% if att_labels %}
+<div class="card chart-card mb-4">
+  <h6 class="fw-bold mb-3">Attendance Trend — {{ selected_section.name }} (Last 30 Days)</h6>
+  <canvas id="attChart" height="100"></canvas>
+</div>
+<script>
+new Chart(document.getElementById('attChart'),{type:'line',data:{labels:{{ att_labels }},datasets:[{label:'Present',data:{{ att_present }},borderColor:'#198754',backgroundColor:'rgba(25,135,84,.1)',fill:true},{label:'Absent',data:{{ att_absent }},borderColor:'#dc3545',backgroundColor:'rgba(220,53,69,.1)',fill:true}]},options:{responsive:true}});
+</script>
+{% endif %}
+
+{% if my_students %}
+<div class="card chart-card">
+  <h6 class="fw-bold mb-3">Students — {{ selected_section.name }}</h6>
+  <div class="table-responsive">
+    <table class="table table-sm table-bordered align-middle">
+      <thead class="table-light"><tr><th>#</th><th>LRN</th><th>Name</th><th>Sex</th></tr></thead>
+      <tbody>
+        {% for s in my_students %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ s.lrn }}</td>
+          <td>{{ s.last_name }}, {{ s.first_name }} {{ s.name_extension }} {{ s.middle_name }}</td>
+          <td>{{ s.gender|slice:":1" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="alert alert-info">Select your advisory section above to see the dashboard.</div>
+{% endif %}
+
+{# ======================================================= #}
+{% elif role == "subject_teacher" %}
+{# ======================================================= #}
+
+<div class="card p-3 mb-4">
+  <form method="get" class="row g-2 align-items-end">
+    <div class="col-auto"><label class="form-label fw-semibold">Select Your Teacher Record</label>
+      <select name="teacher" class="form-select">
+        <option value="">— choose your name —</option>
+        {% for t in teachers %}
+          <option value="{{ t.pk }}" {% if t == selected_teacher %}selected{% endif %}>
+            {{ t.last_name }}, {{ t.first_name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto"><button class="btn btn-primary">View</button></div>
+  </form>
+</div>
+
+{% if selected_teacher %}
+<div class="row g-3 mb-4">
+  {% include "dashboard/_stat.html" with label="My Subjects"    value=subject_count   color="primary" %}
+  {% include "dashboard/_stat.html" with label="Total Students" value=total_students  color="success" %}
+</div>
+
+<div class="quick-links mb-4">
+  <a href="{% url 'ecr_select' %}" class="btn btn-outline-primary">E-Class Record</a>
+  <a href="{% url 'sf1_import' %}" class="btn btn-outline-secondary">SF1 Import</a>
+  <a href="{% url 'sf2_export' %}" class="btn btn-outline-success">SF2 Export</a>
+</div>
+
+{% if subject_summary %}
+<div class="card chart-card">
+  <h6 class="fw-bold mb-3">My Subjects — Grade Completion</h6>
+  <div class="table-responsive">
+    <table class="table table-sm table-bordered align-middle">
+      <thead class="table-light">
+        <tr><th>Subject</th><th>Section</th><th>Semester</th><th>Students</th><th>Final Grades Done</th></tr>
+      </thead>
+      <tbody>
+        {% for row in subject_summary %}
+        <tr>
+          <td>{{ row.subject }}</td>
+          <td>{{ row.section }}</td>
+          <td>{{ row.semester }}</td>
+          <td>{{ row.students }}</td>
+          <td>
+            {{ row.grades_done }}/{{ row.students }}
+            {% if row.grades_done == row.students and row.students > 0 %}
+              <span class="badge bg-success ms-1">Complete</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="alert alert-info">Select your teacher record above to see your subjects and grade completion.</div>
+{% endif %}
+
+{# ======================================================= #}
+{% elif role == "student" %}
+{# ======================================================= #}
+
+{% if student %}
+  <div class="row g-3 mb-4">
+    {% include "dashboard/_stat.html" with label="Grade Level" value=enrollment.grade_level color="primary" %}
+    {% include "dashboard/_stat.html" with label="Section"     value=enrollment.section     color="success" %}
+    {% include "dashboard/_stat.html" with label="School Year" value=enrollment.school_year color="info" %}
+    {% if general_avg %}
+    {% include "dashboard/_stat.html" with label="My General Average" value=general_avg color="warning" %}
+    {% endif %}
+  </div>
+
+  {% if my_grades %}
+  <div class="card chart-card">
+    <h6 class="fw-bold mb-3">My Grades — {{ enrollment.school_year }}</h6>
+    <div class="table-responsive">
+      <table class="table table-sm table-bordered align-middle">
+        <thead class="table-light">
+          <tr><th>Subject</th><th>Term 1</th><th>Term 2</th><th>Term 3</th><th>Final</th><th>Remarks</th></tr>
+        </thead>
+        <tbody>
+          {% for g in my_grades %}
+          <tr>
+            <td>{{ g.subject.name }}</td>
+            <td>{{ g.first_quarter|default:"—" }}</td>
+            <td>{{ g.second_quarter|default:"—" }}</td>
+            <td>{{ g.third_quarter|default:"—" }}</td>
+            <td><strong>{{ g.final_grade|default:"—" }}</strong></td>
+            <td>
+              {% if g.final_grade %}
+                {% if g.final_grade >= 75 %}<span class="badge bg-success">Passed</span>
+                {% else %}<span class="badge bg-danger">Failed</span>{% endif %}
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="alert alert-info">No grades have been computed yet for this school year.</div>
+  {% endif %}
+
+{% else %}
+<div class="alert alert-warning">
+  Your student account is not yet linked to a student record.
+  Please contact your adviser or the admin.
+</div>
+{% endif %}
+
+{# ======================================================= #}
+{% elif role == "parent" %}
+{# ======================================================= #}
+
+{% if children %}
+  {% if children|length > 1 %}
+  <div class="card p-3 mb-4">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-auto"><label class="form-label fw-semibold">Select Child</label>
+        <select name="child" class="form-select">
+          {% for child in children %}
+            <option value="{{ child.pk }}" {% if child == sel_child %}selected{% endif %}>
+              {{ child.last_name }}, {{ child.first_name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-auto"><button class="btn btn-primary">View</button></div>
+    </form>
+  </div>
+  {% endif %}
+
+  {% if sel_child %}
+  <div class="row g-3 mb-4">
+    {% include "dashboard/_stat.html" with label="Child" value=sel_child color="primary" %}
+    {% if child_enroll %}
+    {% include "dashboard/_stat.html" with label="Grade Level" value=child_enroll.grade_level color="success" %}
+    {% include "dashboard/_stat.html" with label="Section"     value=child_enroll.section     color="info" %}
+    {% endif %}
+    {% include "dashboard/_stat.html" with label="Days Present" value=att_summary.present color="success" %}
+    {% include "dashboard/_stat.html" with label="Days Absent"  value=att_summary.absent  color="danger" %}
+    {% include "dashboard/_stat.html" with label="Tardy"        value=att_summary.late    color="warning" %}
+  </div>
+
+  {% if child_grades %}
+  <div class="card chart-card mb-4">
+    <h6 class="fw-bold mb-3">Grades — {{ child_enroll.school_year }}</h6>
+    <div class="table-responsive">
+      <table class="table table-sm table-bordered align-middle">
+        <thead class="table-light">
+          <tr><th>Subject</th><th>Term 1</th><th>Term 2</th><th>Term 3</th><th>Final</th><th>Remarks</th></tr>
+        </thead>
+        <tbody>
+          {% for g in child_grades %}
+          <tr>
+            <td>{{ g.subject.name }}</td>
+            <td>{{ g.first_quarter|default:"—" }}</td>
+            <td>{{ g.second_quarter|default:"—" }}</td>
+            <td>{{ g.third_quarter|default:"—" }}</td>
+            <td><strong>{{ g.final_grade|default:"—" }}</strong></td>
+            <td>{% if g.final_grade %}{% if g.final_grade >= 75 %}<span class="badge bg-success">Passed</span>{% else %}<span class="badge bg-danger">Failed</span>{% endif %}{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if recent_att %}
+  <div class="card chart-card">
+    <h6 class="fw-bold mb-3">Recent Attendance (Last 30 Days)</h6>
+    <div class="table-responsive">
+      <table class="table table-sm table-bordered align-middle">
+        <thead class="table-light"><tr><th>Date</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for a in recent_att %}
+          <tr>
+            <td>{{ a.date }}</td>
+            <td>
+              {% if a.status == "Present" %}<span class="badge bg-success">Present</span>
+              {% elif a.status == "Absent" %}<span class="badge bg-danger">Absent</span>
+              {% else %}<span class="badge bg-warning text-dark">{{ a.status }}</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+  {% endif %}
+
+{% else %}
+<div class="alert alert-info">No student records are linked to your parent account yet.</div>
+{% endif %}
+
+{# ======================================================= #}
+{% else %}{# generic teacher / fallback #}
+{# ======================================================= #}
+
+<div class="row g-3 mb-4">
+  {% include "dashboard/_stat.html" with label="Total Students"     value=total_students  color="primary" %}
+  {% include "dashboard/_stat.html" with label="Total Teachers"     value=total_teachers  color="success" %}
+  {% include "dashboard/_stat.html" with label="Today's Attendance" value=attendance_rate color="info" %}
+</div>
+
+<div class="quick-links mb-4">
+  <a href="{% url 'ecr_select' %}"           class="btn btn-outline-primary">E-Class Record</a>
+  <a href="{% url 'sf1_import' %}"           class="btn btn-outline-secondary">SF1 Import</a>
+  <a href="{% url 'sf2_export' %}"           class="btn btn-outline-success">SF2 Export</a>
+  <a href="{% url 'attendance_mark_select' %}" class="btn btn-outline-info">Mark Attendance</a>
+</div>
+
+{% if att_labels %}
+<div class="card chart-card">
+  <h6 class="fw-bold mb-3">Attendance Trend (Last 30 Days)</h6>
+  <canvas id="attChart" height="100"></canvas>
+</div>
+<script>
+new Chart(document.getElementById('attChart'),{type:'line',data:{labels:{{ att_labels }},datasets:[{label:'Present',data:{{ att_present }},borderColor:'#198754',backgroundColor:'rgba(25,135,84,.1)',fill:true},{label:'Absent',data:{{ att_absent }},borderColor:'#dc3545',backgroundColor:'rgba(220,53,69,.1)',fill:true}]},options:{responsive:true}});
+</script>
+{% endif %}
+
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Class Ranking{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+  <h2 class="fw-bold mb-1">Class Ranking</h2>
+  <p class="text-muted">Students ranked by General Average (descending). Formula: GA = mean of all subject Final Grades (DepEd Order 8 s.2015), rounded to whole number.</p>
+
+  <form method="get" class="row g-2 align-items-end mb-4 p-3 bg-light rounded">
+    <div class="col-md-4">
+      <label class="form-label fw-semibold">School Year</label>
+      <select name="school_year" class="form-select">
+        {% for sy in school_years %}
+          <option value="{{ sy.pk }}" {% if sy == selected_sy %}selected{% endif %}>{{ sy }}{% if sy.is_active %} (Active){% endif %}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label fw-semibold">Section <span class="text-muted fw-normal">(optional — blank = all)</span></label>
+      <select name="section" class="form-select">
+        <option value="">— All Sections —</option>
+        {% for sec in sections %}
+          <option value="{{ sec.pk }}" {% if sec == selected_section %}selected{% endif %}>{{ sec.grade_level }} – {{ sec.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2"><button class="btn btn-primary w-100 mt-1">View Ranking</button></div>
+    {% if selected_section %}<div class="col-md-2"><a href="?school_year={{ selected_sy.pk }}" class="btn btn-outline-secondary w-100 mt-1">All Sections</a></div>{% endif %}
+  </form>
+
+  {% if selected_sy %}
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h5 class="mb-0">{{ selected_sy }}{% if selected_section %} — {{ selected_section }}{% endif %}</h5>
+    <span class="text-muted small">{{ rows|length }} student{{ rows|length|pluralize }}</span>
+  </div>
+
+  {% if rows %}
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+      <thead class="table-dark">
+        <tr>
+          <th class="text-center" style="width:60px">Rank</th>
+          <th>LRN</th>
+          <th>Learner Name</th>
+          {% if not selected_section %}<th>Section</th>{% endif %}
+          <th class="text-center">General Average</th>
+          <th>Descriptor</th>
+          <th>Remarks</th>
+          <th>Award</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr {% if r.award == "With Highest Honors" %}class="table-warning"{% elif r.award == "With High Honors" %}class="table-info"{% elif r.award == "With Honors" %}class="table-success"{% endif %}>
+          <td class="text-center fw-bold">{{ r.rank }}</td>
+          <td class="font-monospace small">{{ r.student.lrn }}</td>
+          <td>{{ r.student.last_name }}, {{ r.student.first_name }} {{ r.student.name_extension }} {{ r.student.middle_name }}</td>
+          {% if not selected_section %}<td>{{ r.section.name }}</td>{% endif %}
+          <td class="text-center fw-bold fs-5">
+            {% if r.general_average %}{{ r.general_average }}{% else %}<span class="text-muted">—</span>{% endif %}
+          </td>
+          <td>{{ r.descriptor|default:"—" }}</td>
+          <td>
+            {% if r.remarks == "Passed" %}<span class="badge bg-success">Passed</span>
+            {% elif r.remarks == "Failed" %}<span class="badge bg-danger">Failed</span>
+            {% else %}<span class="text-muted">—</span>{% endif %}
+          </td>
+          <td>
+            {% if r.award %}
+              {% if r.award == "With Highest Honors" %}<span class="badge bg-warning text-dark">🏆 {{ r.award }}</span>
+              {% elif r.award == "With High Honors" %}<span class="badge bg-info text-dark">🥇 {{ r.award }}</span>
+              {% else %}<span class="badge bg-success">🎖 {{ r.award }}</span>{% endif %}
+            {% else %}<span class="text-muted">—</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="alert alert-info">No enrollment or grade records found for the selected filters.</div>
+  {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

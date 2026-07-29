@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}E-Class Record Grid{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid mt-3">
+
+    <h2>E-Class Record &mdash; {{ assignment.subject }}</h2>
+    <p class="text-muted mb-1">
+        {{ assignment.section }} &nbsp;|&nbsp; {{ school_year }} &nbsp;|&nbsp;
+        {{ period_label }} &nbsp;|&nbsp; Teacher: {{ assignment.teacher }}
+    </p>
+    <p class="small text-muted">
+        Weights &mdash; Written Work: {{ weights.WW }}% &middot;
+        Performance Task: {{ weights.PT }}% &middot;
+        Quarterly Assessment: {{ weights.QA }}%.
+        Initial Grade is transmuted to the official Quarterly/Term Grade
+        (DepEd Order No. 8, s. 2015). Blank cell = not administered.
+    </p>
+
+    {# ---------- add an assessment column ---------- #}
+    <form method="POST" action="{% url 'ecr_add_assessment' assignment_id=assignment.pk quarter=quarter %}"
+          class="row row-cols-lg-auto g-2 align-items-end mb-3">
+        {% csrf_token %}
+        <div class="col">{{ assessment_form.component.label_tag }} {{ assessment_form.component }}</div>
+        <div class="col">{{ assessment_form.label.label_tag }} {{ assessment_form.label }}</div>
+        <div class="col">{{ assessment_form.highest_score.label_tag }} {{ assessment_form.highest_score }}</div>
+        <div class="col-12 col-md">{{ assessment_form.competency.label_tag }} {{ assessment_form.competency }}</div>
+        <div class="col-auto"><button type="submit" class="btn btn-outline-primary">Add Column</button></div>
+    </form>
+
+    {% if not assessments %}
+        <div class="alert alert-info">
+            No assessment columns yet — add the first Written Work,
+            Performance Task or Quarterly Assessment above.
+        </div>
+    {% else %}
+
+    {# ---------- the grid ---------- #}
+    <form method="POST">
+        {% csrf_token %}
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th rowspan="2">#</th>
+                        <th rowspan="2">Learner</th>
+                        {% for assessment in assessments %}
+                            <th class="text-center small">
+                                {{ assessment.component }}<br>{{ assessment.label }}
+                                {% if assessment.competency %}
+                                <br><span class="text-info" style="font-size:.65rem;font-weight:normal;">
+                                    {{ assessment.competency|truncatechars:50 }}
+                                </span>
+                                {% endif %}
+                            </th>
+                        {% endfor %}
+                        <th rowspan="2" class="text-center">Initial<br>Grade</th>
+                        <th rowspan="2" class="text-center">{{ period_label }}<br>Grade</th>
+                    </tr>
+                    <tr>
+                        {% for assessment in assessments %}
+                            <th class="text-center small text-muted">
+                                HPS {{ assessment.highest_score|floatformat:"-2" }}
+                            </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td class="text-nowrap">
+                            {{ row.student.last_name }}, {{ row.student.first_name }}
+                            {{ row.student.name_extension }}
+                        </td>
+                        {% for cell in row.cells %}
+                        <td>
+                            <input type="text" inputmode="decimal"
+                                   class="form-control form-control-sm text-center"
+                                   style="min-width: 4.5rem;"
+                                   name="score_{{ row.student.pk }}_{{ cell.assessment.pk }}"
+                                   value="{{ cell.value }}">
+                        </td>
+                        {% endfor %}
+                        <td class="text-center">{{ row.initial_grade|default_if_none:"—" }}</td>
+                        <td class="text-center fw-bold">{{ row.term_grade|default_if_none:"—" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <button type="submit" class="btn btn-success">
+            Save &amp; Compute Grades
+        </button>
+        <a href="{% url 'ecr_select' %}" class="btn btn-outline-secondary">Back</a>
+
+        {# ECR Export — M-7Jul: send softcopy to Adviser / generate ECR with grades #}
+        <div class="d-inline-flex gap-2 ms-3">
+          <a href="{% url 'ecr_export_excel' assignment.pk quarter %}"
+             class="btn btn-outline-success">
+            <i class="fa-solid fa-file-excel me-1"></i>Download ECR (.xlsx)
+          </a>
+          <a href="{% url 'ecr_export_pdf' assignment.pk quarter %}"
+             class="btn btn-outline-danger">
+            <i class="fa-solid fa-file-pdf me-1"></i>Download ECR (.pdf)
+          </a>
+        </div>
+    </form>
+
+    {# ---------- remove a column ---------- #}
+    <hr>
+    <p class="small text-muted mb-1">Remove a column (its scores are deleted and grades recomputed):</p>
+    {% for assessment in assessments %}
+        <form method="POST" action="{% url 'ecr_delete_assessment' pk=assessment.pk %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-danger mb-1">
+                {{ assessment.component }} {{ assessment.label }} &times;
+            </button>
+        </form>
+    {% endfor %}
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

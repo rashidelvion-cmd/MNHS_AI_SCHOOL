@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Subject Ranking{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+  <h2 class="fw-bold mb-1">Subject Ranking</h2>
+  <p class="text-muted">Students ranked by a single subject's Final Grade (descending).</p>
+
+  <form method="get" class="row g-2 align-items-end mb-4 p-3 bg-light rounded">
+    <div class="col-md-3">
+      <label class="form-label fw-semibold">School Year</label>
+      <select name="school_year" class="form-select">
+        {% for sy in school_years %}
+          <option value="{{ sy.pk }}" {% if sy == selected_sy %}selected{% endif %}>{{ sy }}{% if sy.is_active %} (Active){% endif %}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label fw-semibold">Subject</label>
+      <select name="subject" class="form-select">
+        <option value="">— Select Subject —</option>
+        {% for s in subjects %}
+          <option value="{{ s.pk }}" {% if s == selected_subject %}selected{% endif %}>{{ s.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label fw-semibold">Section <span class="text-muted fw-normal">(optional)</span></label>
+      <select name="section" class="form-select">
+        <option value="">— All Sections —</option>
+        {% for sec in sections %}
+          <option value="{{ sec.pk }}" {% if sec == selected_section %}selected{% endif %}>{{ sec.grade_level }} – {{ sec.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2"><button class="btn btn-primary w-100 mt-1">View Ranking</button></div>
+  </form>
+
+  {% if selected_sy and selected_subject %}
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h5 class="mb-0">{{ selected_subject.name }} — {{ selected_sy }}{% if selected_section %} — {{ selected_section }}{% endif %}</h5>
+    <span class="text-muted small">{{ rows|length }} student{{ rows|length|pluralize }}</span>
+  </div>
+  {% if rows %}
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+      <thead class="table-dark">
+        <tr>
+          <th class="text-center" style="width:60px">Rank</th>
+          <th>LRN</th>
+          <th>Learner Name</th>
+          <th>Section</th>
+          <th class="text-center">{{ selected_subject.name }} Grade</th>
+          <th>Descriptor</th>
+          <th>Remarks</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td class="text-center fw-bold">{{ r.rank }}</td>
+          <td class="font-monospace small">{{ r.student.lrn }}</td>
+          <td>{{ r.student.last_name }}, {{ r.student.first_name }} {{ r.student.name_extension }}</td>
+          <td>{{ r.section }}</td>
+          <td class="text-center fw-bold fs-5">{{ r.final_grade }}</td>
+          <td>{{ r.descriptor }}</td>
+          <td>{% if r.remarks == "Passed" %}<span class="badge bg-success">Passed</span>{% else %}<span class="badge bg-danger">Failed</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="alert alert-info">No grade records found for the selected filters. Ensure grades have been computed via the E-Class Record.</div>
+  {% endif %}
+  {% else %}
+  <div class="alert alert-secondary">Select a school year and subject to view the ranking.</div>
+  {% endif %}
+</div>
+{% endblock %}

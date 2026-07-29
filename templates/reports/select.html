@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}SF9 Report Card{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h2>SF9 Report Card</h2>
+    <p class="text-muted">Pick a learner and school year to generate their report card PDF.</p>
+
+    <form method="POST" class="col-md-6">
+
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <button type="submit" class="btn btn-primary">
+            Generate PDF
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}

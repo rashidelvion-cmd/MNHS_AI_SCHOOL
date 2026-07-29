@@ -1,0 +1,175 @@
+{% load static %}
+{% with role=request.user.role path=request.path %}
+<div class="sidebar d-flex flex-column" style="
+  background:#1a5c2e;
+  min-height:calc(100vh - 56px);
+  width:240px;flex-shrink:0;
+  padding:16px 0;
+  box-shadow:2px 0 8px rgba(0,0,0,.15);
+">
+
+  <!-- Section label -->
+  <p class="sidebar-label">MAIN MENU</p>
+
+  <a href="{% url 'dashboard' %}"
+     class="sidebar-link {% if '/dashboard' in path %}active{% endif %}">
+    <i class="fa-solid fa-gauge-high"></i> Dashboard
+  </a>
+
+  {# School Events — visible to all authenticated roles (R3) #}
+  <a href="{% url 'event_list' %}"
+     class="sidebar-link {% if '/events' in path %}active{% endif %}">
+    <i class="fa-solid fa-calendar-days"></i> School Events
+    {% if events_this_week %}
+    <span class="badge bg-danger ms-auto" style="font-size:.65rem;">{{ events_this_week }}</span>
+    {% endif %}
+  </a>
+
+  <a href="{% url 'student_list' %}"
+     class="sidebar-link {% if '/students' in path %}active{% endif %}">
+    <i class="fa-solid fa-users"></i> Students
+  </a>
+
+  {% if role == "admin" or role == "principal" or role == "ict_coordinator" or role == "teacher" or role == "adviser" or role == "subject_teacher" %}
+  <a href="{% url 'teacher_list' %}"
+     class="sidebar-link {% if '/teachers' in path %}active{% endif %}">
+    <i class="fa-solid fa-chalkboard-teacher"></i> Teachers
+  </a>
+  {% endif %}
+
+  <a href="{% url 'enrollment_list' %}"
+     class="sidebar-link {% if '/enrollment' in path %}active{% endif %}">
+    <i class="fa-solid fa-id-card"></i> Enrollment
+  </a>
+
+  <a href="{% url 'attendance_list' %}"
+     class="sidebar-link {% if '/attendance' in path and '/mark' not in path %}active{% endif %}">
+    <i class="fa-solid fa-calendar-check"></i> Attendance
+  </a>
+
+  {% if role == "admin" or role == "principal" or role == "ict_coordinator" or role == "teacher" or role == "adviser" or role == "subject_teacher" %}
+  <a href="{% url 'attendance_mark_select' %}"
+     class="sidebar-link {% if '/attendance/mark' in path %}active{% endif %}">
+    <i class="fa-solid fa-check-double"></i> Mark Attendance
+  </a>
+  <a href="{% url 'qr_session_create' %}"
+     class="sidebar-link {% if 'qr/create' in path or 'qr/sessions' in path %}active{% endif %}">
+    <i class="fa-solid fa-qrcode"></i> QR Session
+  </a>
+  <a href="{% url 'face_attendance' %}"
+     class="sidebar-link {% if '/attendance/face' in path %}active{% endif %}">
+    <i class="fa-solid fa-face-smile"></i> Face Attendance
+  </a>
+  {% endif %}
+
+  {% if role == "admin" or role == "ict_coordinator" or role == "teacher" or role == "adviser" or role == "subject_teacher" %}
+  <a href="{% url 'class_record_select' %}"
+     class="sidebar-link {% if '/classrecord' in path and '/ecr' not in path %}active{% endif %}">
+    <i class="fa-solid fa-book-open"></i> Class Record
+  </a>
+  <a href="{% url 'ecr_select' %}"
+     class="sidebar-link {% if '/ecr' in path %}active{% endif %}">
+    <i class="fa-solid fa-table"></i> E-Class Record
+  </a>
+  {% endif %}
+
+  <a href="{% url 'grade_list' %}"
+     class="sidebar-link {% if '/grades' in path and '/ranking' not in path %}active{% endif %}">
+    <i class="fa-solid fa-star"></i> Grades
+  </a>
+
+  {% if role == "admin" or role == "principal" or role == "ict_coordinator" or role == "teacher" or role == "adviser" or role == "subject_teacher" %}
+  <p class="sidebar-label mt-2">RANKING</p>
+  <a href="{% url 'class_ranking' %}"
+     class="sidebar-link {% if 'ranking/class' in path %}active{% endif %}">
+    <i class="fa-solid fa-medal"></i> Class Ranking
+  </a>
+  <a href="{% url 'subject_ranking' %}"
+     class="sidebar-link {% if 'ranking/subject' in path %}active{% endif %}">
+    <i class="fa-solid fa-chart-bar"></i> Subject Ranking
+  </a>
+  <a href="{% url 'awards_list' %}"
+     class="sidebar-link {% if 'ranking/awards' in path %}active{% endif %}">
+    <i class="fa-solid fa-trophy"></i> Awards List
+  </a>
+  {% endif %}
+
+  {% if role == "admin" or role == "ict_coordinator" or role == "teacher" or role == "adviser" or role == "subject_teacher" %}
+  <p class="sidebar-label mt-2">SCHOOL FORMS</p>
+  <a href="{% url 'sf1_import' %}"
+     class="sidebar-link {% if 'sf1/import' in path %}active{% endif %}">
+    <i class="fa-solid fa-file-import"></i> SF1 Import
+  </a>
+  {% endif %}
+
+  {% if role == "admin" or role == "principal" or role == "ict_coordinator" or role == "teacher" or role == "adviser" or role == "subject_teacher" %}
+  <a href="{% url 'sf1_export' %}"
+     class="sidebar-link {% if 'sf1/export' in path %}active{% endif %}">
+    <i class="fa-solid fa-file-export"></i> SF1 Export
+  </a>
+  <a href="{% url 'sf2_export' %}"
+     class="sidebar-link {% if 'sf2' in path %}active{% endif %}">
+    <i class="fa-solid fa-calendar-days"></i> SF2 Attendance
+  </a>
+  {% endif %}
+
+  {% if role == "admin" or role == "principal" or role == "ict_coordinator" or role == "teacher" or role == "adviser" %}
+  <a href="{% url 'sf9_select' %}"
+     class="sidebar-link {% if '/sf9' in path %}active{% endif %}">
+    <i class="fa-solid fa-file-lines"></i> SF9 Report Card
+  </a>
+  <a href="{% url 'sf10_export' %}"
+     class="sidebar-link {% if 'sf10' in path %}active{% endif %}">
+    <i class="fa-solid fa-file-circle-check"></i> SF10 Permanent
+  </a>
+  {% endif %}
+
+  {# ID Maker — Module 11 (D[131-137]) — all staff roles #}
+  {% if role == "admin" or role == "principal" or role == "ict_coordinator" or role == "teacher" or role == "adviser" or role == "subject_teacher" %}
+  <p class="sidebar-label mt-2">ID MAKER</p>
+  <a href="{% url 'id_maker_student' %}"
+     class="sidebar-link {% if 'id/student' in path %}active{% endif %}">
+    <i class="fa-solid fa-id-card"></i> Student ID
+  </a>
+  <a href="{% url 'id_maker_teacher' %}"
+     class="sidebar-link {% if 'id/teacher' in path %}active{% endif %}">
+    <i class="fa-solid fa-id-badge"></i> Teacher ID
+  </a>
+  {% endif %}
+
+  {# Certificate Generator — Module 12 (D[138-145]) — all staff roles #}
+  {% if role == "admin" or role == "principal" or role == "ict_coordinator" or role == "teacher" or role == "adviser" or role == "subject_teacher" %}
+  <p class="sidebar-label mt-2">CERTIFICATES</p>
+  <a href="{% url 'certificate_generate' %}"
+     class="sidebar-link {% if 'certificates' in path %}active{% endif %}">
+    <i class="fa-solid fa-certificate"></i> Generate Certificate
+  </a>
+  {% endif %}
+
+</div>
+
+<style>
+.sidebar-label{
+  font-size:.65rem;font-weight:700;letter-spacing:.1em;
+  color:rgba(255,255,255,.45);padding:4px 20px 2px;
+  text-transform:uppercase;margin:0;
+}
+.sidebar-link{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 20px;color:rgba(255,255,255,.8);
+  text-decoration:none;font-size:.88rem;
+  border-left:3px solid transparent;
+  transition:background .15s,color .15s,border-color .15s;
+}
+.sidebar-link:hover{
+  background:rgba(255,255,255,.1);
+  color:#fff;border-left-color:rgba(255,255,255,.5);
+}
+.sidebar-link.active{
+  background:rgba(255,255,255,.18);
+  color:#fff;font-weight:600;
+  border-left-color:#ffc107;
+}
+.sidebar-link i{width:18px;text-align:center;font-size:.85rem;}
+</style>
+{% endwith %}

@@ -1,0 +1,248 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MNHS AI School — Login</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+
+/* ── Layout ── */
+html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;}
+.login-wrapper{display:flex;min-height:100vh;}
+
+/* ── Left panel — MNHS maroon brand color, no photo ── */
+.left-panel{
+  flex:1;
+  position:relative;
+  background:linear-gradient(160deg,#6b0f1a 0%,#8b1a2a 40%,#5a0c16 100%);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:60px 56px;
+  color:#fff;
+  overflow:hidden;
+}
+/* subtle pattern overlay */
+.left-panel::before{
+  content:'';
+  position:absolute;inset:0;
+  background:
+    radial-gradient(circle at 20% 20%,rgba(255,255,255,.06) 0%,transparent 50%),
+    radial-gradient(circle at 80% 80%,rgba(255,255,255,.04) 0%,transparent 40%);
+  pointer-events:none;
+}
+.left-panel::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:radial-gradient(ellipse at 30% 50%,rgba(255,255,255,.03) 0%,transparent 70%);
+  pointer-events:none;
+}
+
+/* school logo */
+.school-logo{
+  width:130px;height:130px;
+  object-fit:contain;
+  margin-bottom:28px;
+  drop-shadow:0 4px 12px rgba(0,0,0,.4);
+  filter:drop-shadow(0 4px 16px rgba(0,0,0,.5));
+}
+
+.sys-title{
+  font-size:2.1rem;font-weight:800;
+  line-height:1.2;margin-bottom:10px;
+  letter-spacing:-.02em;
+}
+.sys-subtitle{
+  font-size:1rem;opacity:.8;margin-bottom:36px;
+  line-height:1.6;
+}
+
+/* feature bullets */
+.feature-list{list-style:none;padding:0;margin:0;}
+.feature-list li{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 0;font-size:.95rem;opacity:.9;
+  border-bottom:1px solid rgba(255,255,255,.1);
+}
+.feature-list li:last-child{border-bottom:none;}
+.feature-list li i{
+  width:36px;height:36px;border-radius:10px;
+  background:rgba(255,255,255,.15);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.95rem;flex-shrink:0;
+}
+
+/* school name footer */
+.school-footer{
+  margin-top:auto;padding-top:32px;
+  font-size:.8rem;opacity:.55;letter-spacing:.04em;
+  text-transform:uppercase;
+}
+
+/* ── Right panel — white form ── */
+.right-panel{
+  width:480px;flex-shrink:0;
+  background:#fff;
+  display:flex;flex-direction:column;
+  justify-content:center;
+  padding:60px 48px;
+  box-shadow:-8px 0 40px rgba(0,0,0,.15);
+}
+
+.right-panel h2{
+  font-size:2rem;font-weight:800;color:#111;margin-bottom:6px;
+}
+.right-panel .sub{color:#666;margin-bottom:36px;font-size:.95rem;}
+
+/* form controls */
+.form-label{font-weight:600;font-size:.85rem;color:#333;margin-bottom:6px;}
+.input-wrap{position:relative;margin-bottom:20px;}
+.input-wrap i{
+  position:absolute;left:14px;top:50%;transform:translateY(-50%);
+  color:#888;font-size:.9rem;pointer-events:none;z-index:2;
+}
+.input-wrap .form-control,
+.input-wrap .form-select{
+  padding-left:40px;height:52px;border-radius:10px;
+  border:1.5px solid #e0e0e0;font-size:.95rem;
+  transition:border-color .2s,box-shadow .2s;
+}
+.input-wrap .form-control:focus,
+.input-wrap .form-select:focus{
+  border-color:#7a1020;box-shadow:0 0 0 3px rgba(122,16,32,.12);outline:none;
+}
+
+/* password toggle */
+.pwd-toggle{
+  position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  color:#888;cursor:pointer;font-size:.95rem;z-index:2;
+  background:none;border:none;padding:0;
+}
+.pwd-toggle:hover{color:#1a5c2e;}
+
+/* forgot link */
+.forgot{
+  display:block;text-align:right;font-size:.85rem;
+  color:#7a1020;text-decoration:none;margin-top:-12px;margin-bottom:24px;
+}
+.forgot:hover{text-decoration:underline;}
+
+/* submit button */
+.btn-signin{
+  background:#7a1020;color:#fff;
+  border:none;height:52px;border-radius:10px;
+  font-size:1rem;font-weight:700;width:100%;
+  transition:background .2s,transform .15s;
+  letter-spacing:.03em;
+}
+.btn-signin:hover{background:#5a0c16;transform:translateY(-1px);}
+.btn-signin:active{transform:translateY(0);}
+
+/* error */
+.alert-mnhs{
+  background:#fef2f2;border:1px solid #fca5a5;
+  color:#b91c1c;border-radius:10px;
+  padding:12px 16px;font-size:.9rem;margin-bottom:20px;
+}
+
+/* ── Responsive ── */
+@media(max-width:900px){
+  .login-wrapper{flex-direction:column;}
+  .left-panel{padding:40px 32px 32px;}
+  .right-panel{width:100%;padding:40px 32px;}
+  .school-logo{width:90px;height:90px;}
+  .sys-title{font-size:1.6rem;}
+}
+</style>
+</head>
+<body>
+
+<div class="login-wrapper">
+
+  <!-- ══ LEFT PANEL ══ -->
+  <div class="left-panel">
+    <img src="{% static 'images/logo.jpg' %}" class="school-logo" alt="MNHS Logo">
+
+    <h1 class="sys-title">MNHS AI School Forms<br>Management System</h1>
+    <p class="sys-subtitle">
+      Mayorga National High School<br>
+      Mayorga, Leyte · DepEd Region VIII
+    </p>
+
+    <ul class="feature-list">
+      <li><i class="fa-solid fa-file-alt"></i> SF1 · SF2 · SF9 · SF10 Auto-Generation</li>
+      <li><i class="fa-solid fa-chart-bar"></i> E-Class Record &amp; Grade Computation</li>
+      <li><i class="fa-solid fa-users"></i> Multi-Role Access Control</li>
+      <li><i class="fa-solid fa-trophy"></i> Ranking &amp; Awards Module</li>
+      <li><i class="fa-solid fa-tachometer-alt"></i> Real-Time Analytics Dashboard</li>
+    </ul>
+
+    <p class="school-footer">Mayorga National High School · Est. 1966 · Truth</p>
+  </div>
+
+  <!-- ══ RIGHT PANEL ══ -->
+  <div class="right-panel">
+    <h2>Welcome back!</h2>
+    <p class="sub">Sign in to your account to continue.</p>
+
+    {% if error %}
+    <div class="alert-mnhs"><i class="fa-solid fa-circle-exclamation me-2"></i>{{ error }}</div>
+    {% endif %}
+
+    {% if messages %}
+    {% for msg in messages %}
+    <div class="alert-mnhs"><i class="fa-solid fa-circle-exclamation me-2"></i>{{ msg }}</div>
+    {% endfor %}
+    {% endif %}
+
+    <form method="POST" novalidate>
+      {% csrf_token %}
+
+      <label class="form-label">Username</label>
+      <div class="input-wrap">
+        <i class="fa-solid fa-user"></i>
+        <input type="text" name="username" class="form-control"
+               placeholder="Enter your username" required autofocus
+               value="{{ request.POST.username|default:'' }}">
+      </div>
+
+      <label class="form-label">Password</label>
+      <div class="input-wrap">
+        <i class="fa-solid fa-lock"></i>
+        <input type="password" name="password" id="pwdField" class="form-control"
+               placeholder="Enter your password" required>
+        <button type="button" class="pwd-toggle" onclick="togglePwd()">
+          <i class="fa-solid fa-eye" id="pwdIcon"></i>
+        </button>
+      </div>
+
+      <a href="#" class="forgot">Forgot your password?</a>
+
+      <button type="submit" class="btn-signin">
+        <i class="fa-solid fa-right-to-bracket me-2"></i>Sign In
+      </button>
+    </form>
+
+    <p class="text-center mt-4" style="font-size:.78rem;color:#aaa;">
+      MNHS AI School Forms Management System &copy; {{ now.year|default:"2026" }}
+    </p>
+  </div>
+
+</div>
+
+<script>
+function togglePwd(){
+  var f=document.getElementById('pwdField');
+  var i=document.getElementById('pwdIcon');
+  if(f.type==='password'){f.type='text';i.className='fa-solid fa-eye-slash';}
+  else{f.type='password';i.className='fa-solid fa-eye';}
+}
+</script>
+
+</body>
+</html>

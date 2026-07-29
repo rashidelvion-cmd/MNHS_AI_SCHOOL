@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}Certificate Generator{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+  <h2 class="fw-bold mb-1">Certificate Generator</h2>
+  <p class="text-muted mb-4">
+    Generate printable PDF certificates for students.
+    Select the student, the certificate type, and (where required) enter
+    the activity or achievement.
+  </p>
+
+  <!-- Optional filter -->
+  <form method="get" class="row g-2 align-items-end mb-4 p-3 bg-light rounded">
+    <div class="col-md-4">
+      <label class="form-label fw-semibold">School Year</label>
+      <select name="school_year" class="form-select">
+        <option value="">— All School Years —</option>
+        {% for sy in school_years %}
+          <option value="{{ sy.pk }}" {% if sy == selected_sy %}selected{% endif %}>
+            {{ sy }}{% if sy.is_active %} (Active){% endif %}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label fw-semibold">Section</label>
+      <select name="section" class="form-select">
+        <option value="">— All Sections —</option>
+        {% for sec in sections %}
+          <option value="{{ sec.pk }}" {% if sec == selected_sec %}selected{% endif %}>
+            {{ sec.grade_level }} — {{ sec.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-outline-secondary w-100">Filter</button>
+    </div>
+  </form>
+
+  <!-- Certificate generation form -->
+  <form method="post" id="certForm">
+    {% csrf_token %}
+    <div class="row g-4">
+
+      <!-- Left: student list -->
+      <div class="col-md-7">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header fw-bold" style="background:#7a1020;color:#fff;">
+            Select Student ({{ students|length }} found)
+          </div>
+          <div class="card-body p-0">
+            {% if students %}
+            <div class="table-responsive" style="max-height:420px;overflow-y:auto;">
+              <table class="table table-sm table-hover align-middle mb-0">
+                <thead class="table-light sticky-top">
+                  <tr>
+                    <th style="width:36px"></th>
+                    <th>LRN</th>
+                    <th>Learner Name</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for student in students %}
+                  <tr onclick="selectStudent('{{ student.pk }}')"
+                      id="row-{{ student.pk }}"
+                      style="cursor:pointer;">
+                    <td class="text-center">
+                      <input type="radio" name="student" value="{{ student.pk }}"
+                             id="s-{{ student.pk }}"
+                             onchange="highlightRow('{{ student.pk }}')">
+                    </td>
+                    <td class="font-monospace small">{{ student.lrn }}</td>
+                    <td>{{ student.last_name }}, {{ student.first_name }}
+                      {% if student.name_extension %}{{ student.name_extension }}{% endif %}
+                      {{ student.middle_name }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+            <p class="text-muted p-4 mb-0">No students found. Adjust the filter above.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: certificate options -->
+      <div class="col-md-5">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header fw-bold" style="background:#1a5c2e;color:#fff;">
+            Certificate Options
+          </div>
+          <div class="card-body d-flex flex-column gap-3">
+
+            <div>
+              <label class="form-label fw-semibold">Certificate Type</label>
+              <select name="cert_type" class="form-select" id="certType"
+                      onchange="toggleFreeText()">
+                <option value="">— Select type —</option>
+                {% for key, label in cert_types.items %}
+                <option value="{{ key }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div id="freeTextBlock" style="display:none;">
+              <label class="form-label fw-semibold" id="freeTextLabel">
+                Description
+              </label>
+              <input type="text" name="free_text" id="freeText"
+                     class="form-control"
+                     placeholder="e.g. Science Fair 2024 / Math Quiz Bee">
+              <div class="form-text">
+                This text will appear on the certificate.
+              </div>
+            </div>
+
+            <div class="mt-auto pt-3">
+              <button type="submit" class="btn fw-bold w-100 py-2"
+                      style="background:#7a1020;color:#fff;">
+                <i class="fa-solid fa-certificate me-2"></i>
+                Generate Certificate PDF
+              </button>
+              <small class="text-muted d-block text-center mt-2">
+                PDF will download automatically.
+              </small>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /row -->
+  </form>
+</div>
+
+<script>
+// Free-text types that need the description field
+const freeTextTypes = {{ free_text_types|safe }};
+
+function toggleFreeText() {
+  const type  = document.getElementById('certType').value;
+  const block = document.getElementById('freeTextBlock');
+  const label = document.getElementById('freeTextLabel');
+  const input = document.getElementById('freeText');
+  if (freeTextTypes.includes(type)) {
+    block.style.display = 'block';
+    label.textContent = type === 'recognition'
+      ? 'Recognized for'
+      : 'Participated in';
+    input.placeholder = type === 'recognition'
+      ? 'e.g. Academic Excellence / Science Fair 2024'
+      : 'e.g. School Sports Fest / Math Quiz Bee';
+    input.required = true;
+  } else {
+    block.style.display = 'none';
+    input.required = false;
+  }
+}
+
+function selectStudent(pk) {
+  const radio = document.getElementById('s-' + pk);
+  if (radio) { radio.checked = true; highlightRow(pk); }
+}
+
+function highlightRow(pk) {
+  document.querySelectorAll('tbody tr').forEach(r =>
+    r.classList.remove('table-warning'));
+  const row = document.getElementById('row-' + pk);
+  if (row) row.classList.add('table-warning');
+}
+</script>
+{% endblock %}

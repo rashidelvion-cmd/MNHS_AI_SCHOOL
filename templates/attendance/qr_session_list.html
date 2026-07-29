@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}QR Attendance Sessions{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">QR Attendance Sessions</h2>
+      <p class="text-muted mb-0">All sessions created by staff.</p>
+    </div>
+    <a href="{% url 'qr_session_create' %}" class="btn fw-bold text-white"
+       style="background:#1a5c2e;">
+      + New Session
+    </a>
+  </div>
+
+  {% if sessions %}
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+      <thead class="table-dark">
+        <tr>
+          <th>Date</th>
+          <th>School Year</th>
+          <th>Section</th>
+          <th>Created By</th>
+          <th>Created At</th>
+          <th>Token</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in sessions %}
+        <tr>
+          <td class="fw-bold">{{ s.date }}</td>
+          <td>{{ s.school_year }}</td>
+          <td>{{ s.section }}</td>
+          <td>{{ s.created_by.username|default:"—" }}</td>
+          <td class="small text-muted">{{ s.created_at|date:"Y-m-d H:i" }}</td>
+          <td class="font-monospace small text-muted"
+              style="max-width:140px;overflow:hidden;text-overflow:ellipsis;">
+            {{ s.token }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="alert alert-info">No QR sessions yet. Create one above.</div>
+  {% endif %}
+</div>
+{% endblock %}

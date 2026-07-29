@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Import SF1{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h2>Import SF1 &mdash; School Register (SHS)</h2>
+    <p class="text-muted">
+        Upload the accomplished official <strong>SF1-SHS</strong> Excel file.
+        Learners in the file will be added to the selected School Year, Grade
+        Level and Section. Nothing is saved until you confirm on the preview
+        page.
+    </p>
+
+    <form method="POST" enctype="multipart/form-data" class="col-md-6">
+
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        {{ form.as_p }}
+
+        <button type="submit" class="btn btn-primary">
+            Upload &amp; Preview
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}

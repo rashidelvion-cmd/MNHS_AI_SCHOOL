@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Generate SF10{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h2>Generate SF10 &mdash; Learner's Permanent Record (SHS)</h2>
+    <p class="text-muted">
+        Select the learner and grade level to download the official
+        <strong>SF10-SHS</strong> Excel file, filled from the learner's
+        enrollment records and computed grades.
+    </p>
+
+    <div class="alert alert-info">
+        <strong>3-Term note:</strong> the school uses the 3-Term grading
+        system, so the SF10's <em>Q1&ndash;Q4</em> columns are left blank
+        &mdash; three terms cannot be written into two quarter columns.
+        The <em>Semestral Grade</em> and the summary <em>Final Grade</em>
+        carry the computed grades, and the General Average recomputes from
+        them inside Excel.
+    </div>
+
+    <form method="POST" class="col-md-6">
+
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        {{ form.as_p }}
+
+        <button type="submit" class="btn btn-primary">
+            Download SF10 (.xlsx)
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}

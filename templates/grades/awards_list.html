@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Awards List{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+  <h2 class="fw-bold mb-1">Awards List</h2>
+  <p class="text-muted">Automatic determination based on General Average (DepEd). Only students who passed every subject qualify.</p>
+
+  <form method="get" class="row g-2 align-items-end mb-4 p-3 bg-light rounded">
+    <div class="col-md-4">
+      <label class="form-label fw-semibold">School Year</label>
+      <select name="school_year" class="form-select">
+        {% for sy in school_years %}
+          <option value="{{ sy.pk }}" {% if sy == selected_sy %}selected{% endif %}>{{ sy }}{% if sy.is_active %} (Active){% endif %}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label fw-semibold">Section <span class="text-muted fw-normal">(optional — blank = all)</span></label>
+      <select name="section" class="form-select">
+        <option value="">— All Sections —</option>
+        {% for sec in sections %}
+          <option value="{{ sec.pk }}" {% if sec == selected_section %}selected{% endif %}>{{ sec.grade_level }} – {{ sec.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2"><button class="btn btn-primary w-100 mt-1">View Awards</button></div>
+  </form>
+
+  {% if selected_sy %}
+  {% with hh=groups|dictsort:"0"|first hgh=groups %}
+
+  {% for award_label, members in groups.items %}
+  <div class="card mb-4 border-0 shadow-sm">
+    <div class="card-header fw-bold fs-5
+      {% if award_label == 'With Highest Honors' %}bg-warning text-dark
+      {% elif award_label == 'With High Honors' %}bg-info text-dark
+      {% else %}bg-success text-white{% endif %}">
+      {% if award_label == "With Highest Honors" %}🏆{% elif award_label == "With High Honors" %}🥇{% else %}🎖{% endif %}
+      {{ award_label }}
+      <span class="fs-6 fw-normal ms-2">
+        {% if award_label == "With Highest Honors" %}(GA 98–100)
+        {% elif award_label == "With High Honors" %}(GA 95–97)
+        {% else %}(GA 90–94){% endif %}
+      </span>
+      <span class="badge bg-white text-dark float-end mt-1">{{ members|length }} student{{ members|length|pluralize }}</span>
+    </div>
+    <div class="card-body p-0">
+      {% if members %}
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered mb-0 align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width:50px">#</th>
+              <th>LRN</th>
+              <th>Learner Name</th>
+              <th>Section</th>
+              <th class="text-center">General Average</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in members %}
+            <tr>
+              <td class="text-center">{{ forloop.counter }}</td>
+              <td class="font-monospace small">{{ m.student.lrn }}</td>
+              <td class="fw-semibold">{{ m.student.last_name }}, {{ m.student.first_name }} {{ m.student.name_extension }}</td>
+              <td>{{ m.section.name|default:"—" }}</td>
+              <td class="text-center fw-bold">{{ m.general_average }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="text-muted p-3 mb-0">No recipients for this award level yet.</p>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+
+  {% endwith %}
+  {% endif %}
+</div>
+{% endblock %}

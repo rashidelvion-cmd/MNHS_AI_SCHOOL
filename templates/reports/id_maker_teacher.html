@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Teacher ID Maker{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+  <h2 class="fw-bold mb-1">Teacher / Faculty ID Maker</h2>
+  <p class="text-muted mb-4">
+    Generate printable PDF ID cards for teachers.
+    Each card includes the teacher's name, employee ID, and a QR code
+    generated from the employee ID.
+  </p>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center"
+           style="background:#1a5c2e;color:#fff;">
+        <span class="fw-bold">Select Teachers ({{ teachers|length }} found)</span>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-sm btn-light"
+                  onclick="document.querySelectorAll('.teacher-cb').forEach(c=>c.checked=true)">
+            Select All
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-light"
+                  onclick="document.querySelectorAll('.teacher-cb').forEach(c=>c.checked=false)">
+            Clear
+          </button>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        {% if teachers %}
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th style="width:40px">
+                  <input type="checkbox" id="selectAll"
+                         onchange="document.querySelectorAll('.teacher-cb').forEach(c=>c.checked=this.checked)">
+                </th>
+                <th>Employee ID</th>
+                <th>Teacher Name</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for teacher in teachers %}
+              <tr>
+                <td>
+                  <input type="checkbox" class="teacher-cb" name="teachers" value="{{ teacher.pk }}">
+                </td>
+                <td class="font-monospace small">{{ teacher.employee_id }}</td>
+                <td>{{ teacher.last_name }}, {{ teacher.first_name }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted p-4 mb-0">No teacher records found in the system.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if teachers %}
+    <button type="submit" class="btn fw-bold px-4" style="background:#1a5c2e;color:#fff;">
+      <i class="fa-solid fa-id-badge me-2"></i>Generate Teacher ID PDF
+    </button>
+    <small class="text-muted ms-3">PDF will download automatically.</small>
+    {% endif %}
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Attendance Check-In{% endblock %}
+{% block content %}
+<div class="container mt-4" style="max-width:480px;">
+  <div class="card border-0 shadow-sm">
+    <div class="card-header fw-bold text-white text-center"
+         style="background:#1a5c2e;font-size:1.1rem;">
+      QR Attendance Check-In
+    </div>
+    <div class="card-body text-center py-5">
+
+      {% if result == "created" %}
+      {# ── Attendance recorded successfully ── #}
+      <i class="fa-solid fa-circle-check fa-4x text-success mb-3"></i>
+      <h4 class="fw-bold text-success">Attendance Recorded Successfully</h4>
+      <p class="text-muted mt-2">
+        <strong>{{ student.first_name }} {{ student.last_name }}</strong><br>
+        Date: <strong>{{ attendance_date }}</strong><br>
+        Status: <strong>Present</strong>
+      </p>
+      <p class="small text-muted">
+        {{ session.section }} &nbsp;|&nbsp; {{ session.school_year }}
+      </p>
+
+      {% elif result == "already_recorded" %}
+      {# ── Already recorded for this date ── #}
+      <i class="fa-solid fa-circle-info fa-4x text-warning mb-3"></i>
+      <h4 class="fw-bold">Attendance Already Recorded</h4>
+      <p class="text-muted mt-2">
+        <strong>{{ student.first_name }} {{ student.last_name }}</strong>,
+        your attendance for <strong>{{ attendance_date }}</strong>
+        has already been recorded as <strong>Present</strong>.
+      </p>
+      <p class="small text-muted">
+        {{ session.section }} &nbsp;|&nbsp; {{ session.school_year }}
+      </p>
+
+      {% elif result == "unlinked" %}
+      {# ── Student account not linked ── #}
+      <i class="fa-solid fa-circle-xmark fa-4x text-danger mb-3"></i>
+      <h4 class="fw-bold text-danger">Account Not Linked</h4>
+      <p class="text-muted mt-2">
+        Your account is not linked to a student record.
+        Please contact the administrator.
+      </p>
+
+      {% else %}
+      {# ── Fallback: invalid or expired session ── #}
+      <i class="fa-solid fa-triangle-exclamation fa-4x text-danger mb-3"></i>
+      <h4 class="fw-bold text-danger">Invalid QR Session</h4>
+      <p class="text-muted mt-2">
+        This QR code is not valid. Please ask your teacher to generate
+        a new attendance session.
+      </p>
+
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}

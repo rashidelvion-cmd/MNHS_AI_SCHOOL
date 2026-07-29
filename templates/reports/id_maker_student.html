@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Student ID Maker{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+  <h2 class="fw-bold mb-1">Student ID Maker</h2>
+  <p class="text-muted mb-4">
+    Generate printable PDF ID cards for students.
+    Each card includes the student's name, LRN, grade, section, and a QR code
+    generated from the student's LRN.
+  </p>
+
+  <!-- Filter form -->
+  <form method="get" class="row g-2 align-items-end mb-4 p-3 bg-light rounded">
+    <div class="col-md-4">
+      <label class="form-label fw-semibold">School Year</label>
+      <select name="school_year" class="form-select">
+        <option value="">— All School Years —</option>
+        {% for sy in school_years %}
+          <option value="{{ sy.pk }}" {% if sy == selected_sy %}selected{% endif %}>
+            {{ sy }}{% if sy.is_active %} (Active){% endif %}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label fw-semibold">Section</label>
+      <select name="section" class="form-select">
+        <option value="">— All Sections —</option>
+        {% for sec in sections %}
+          <option value="{{ sec.pk }}" {% if sec == selected_sec %}selected{% endif %}>
+            {{ sec.grade_level }} — {{ sec.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-outline-secondary w-100">Filter</button>
+    </div>
+  </form>
+
+  <!-- Student selection + generate -->
+  <form method="post">
+    {% csrf_token %}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center"
+           style="background:#7a1020;color:#fff;">
+        <span class="fw-bold">
+          Select Students ({{ students|length }} found)
+        </span>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-sm btn-light"
+                  onclick="document.querySelectorAll('.student-cb').forEach(c=>c.checked=true)">
+            Select All
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-light"
+                  onclick="document.querySelectorAll('.student-cb').forEach(c=>c.checked=false)">
+            Clear
+          </button>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        {% if students %}
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th style="width:40px">
+                  <input type="checkbox" id="selectAll"
+                         onchange="document.querySelectorAll('.student-cb').forEach(c=>c.checked=this.checked)">
+                </th>
+                <th>LRN</th>
+                <th>Learner Name</th>
+                <th>Gender</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for student in students %}
+              <tr>
+                <td>
+                  <input type="checkbox" class="student-cb" name="students" value="{{ student.pk }}">
+                </td>
+                <td class="font-monospace small">{{ student.lrn }}</td>
+                <td>{{ student.last_name }}, {{ student.first_name }}
+                  {% if student.name_extension %}{{ student.name_extension }}{% endif %}
+                  {{ student.middle_name }}</td>
+                <td>{{ student.gender }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted p-4 mb-0">No students found. Try adjusting the filter above.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if students %}
+    <button type="submit" class="btn btn-danger fw-bold px-4">
+      <i class="fa-solid fa-id-card me-2"></i>Generate Student ID PDF
+    </button>
+    <small class="text-muted ms-3">PDF will download automatically.</small>
+    {% endif %}
+  </form>
+</div>
+{% endblock %}

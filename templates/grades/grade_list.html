@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Grades{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h2>Grades</h2>
+
+    <a href="{% url 'add_grade' %}" class="btn btn-primary mb-3">
+        Add Grade
+    </a>
+
+    <table class="table table-bordered table-striped">
+
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Subject</th>
+                <th>School Year</th>
+                <th>P1</th>
+                <th>P2</th>
+                <th>P3</th>
+                <th>P4</th>
+                <th>Final</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+        {% for grade in grades %}
+
+            <tr class="{% if grade.is_locked %}table-secondary{% endif %}">
+                <td>{{ grade.student }}</td>
+                <td>{{ grade.subject }}</td>
+                <td>{{ grade.school_year }} ({{ grade.school_year.get_grading_system_display }})</td>
+                <td>{{ grade.first_quarter|default:"—" }}</td>
+                <td>{{ grade.second_quarter|default:"—" }}</td>
+                <td>{{ grade.third_quarter|default:"—" }}</td>
+                <td>{% if grade.school_year.grading_system == "quarter" %}{{ grade.fourth_quarter|default:"—" }}{% else %}n/a{% endif %}</td>
+                <td>{{ grade.final_grade|default:"—" }}</td>
+
+                {# Lock + Verification status badges #}
+                <td class="text-center">
+                    {% if grade.is_locked %}
+                    <span class="badge bg-danger">
+                        <i class="fa-solid fa-lock me-1"></i>Locked
+                    </span>
+                    {% else %}
+                    <span class="badge bg-success">
+                        <i class="fa-solid fa-lock-open me-1"></i>Open
+                    </span>
+                    {% endif %}
+                    {% if grade.is_verified %}
+                    <span class="badge bg-primary">
+                        <i class="fa-solid fa-circle-check me-1"></i>Verified
+                    </span>
+                    {% else %}
+                    <span class="badge bg-secondary">
+                        <i class="fa-solid fa-circle-question me-1"></i>Unverified
+                    </span>
+                    {% endif %}
+                </td>
+
+                <td class="text-nowrap">
+                    {# SF9 link — always visible #}
+                    <a href="{% url 'sf9_pdf' grade.student.pk grade.school_year.pk %}"
+                       class="btn btn-sm btn-outline-secondary me-1">SF9</a>
+
+                    {# Lock button — admin and principal (Q1) #}
+                    {% if request.user.role == "admin" or request.user.role == "principal" %}
+                        {% if not grade.is_locked %}
+                        <form method="post" action="{% url 'lock_grade' grade.pk %}"
+                              class="d-inline"
+                              onsubmit="return confirm('Lock this grade? It cannot be edited while locked.');">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-warning">
+                                <i class="fa-solid fa-lock me-1"></i>Lock
+                            </button>
+                        </form>
+                        {% endif %}
+                    {% endif %}
+
+                    {# Unlock button — admin only (Q2) #}
+                    {% if request.user.role == "admin" %}
+                        {% if grade.is_locked %}
+                        <form method="post" action="{% url 'unlock_grade' grade.pk %}"
+                              class="d-inline"
+                              onsubmit="return confirm('Unlock this grade? It will become editable again.');">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-outline-danger">
+                                <i class="fa-solid fa-lock-open me-1"></i>Unlock
+                            </button>
+                        </form>
+                        {% endif %}
+                    {% endif %}
+
+                    {# Verify button — admin + principal (Q1) #}
+                    {% if request.user.role == "admin" or request.user.role == "principal" %}
+                        {% if not grade.is_verified %}
+                        <form method="post" action="{% url 'verify_grade' grade.pk %}"
+                              class="d-inline">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-primary">
+                                <i class="fa-solid fa-circle-check me-1"></i>Verify
+                            </button>
+                        </form>
+                        {% endif %}
+                    {% endif %}
+
+                    {# Unverify button — admin only (Q2) #}
+                    {% if request.user.role == "admin" %}
+                        {% if grade.is_verified %}
+                        <form method="post" action="{% url 'unverify_grade' grade.pk %}"
+                              class="d-inline"
+                              onsubmit="return confirm('Remove verification from this grade?');">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-outline-primary">
+                                <i class="fa-solid fa-circle-xmark me-1"></i>Unverify
+                            </button>
+                        </form>
+                        {% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+
+        {% empty %}
+
+            <tr>
+                <td colspan="10" class="text-center">
+                    No Grades Found
+                </td>
+            </tr>
+
+        {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+{% endblock %}

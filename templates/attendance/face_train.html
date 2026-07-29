@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Train Face Recognition Model{% endblock %}
+{% block content %}
+<div class="container mt-4" style="max-width:640px;">
+  <h2 class="fw-bold mb-1">
+    <i class="fa-solid fa-brain me-2" style="color:#7a1020;"></i>
+    Face Recognition — Train Model
+  </h2>
+  <p class="text-muted mb-4">
+    Trains the LBPH face model from all student reference photos.
+    Students without an uploaded photo are skipped and cannot be recognised
+    until a photo is added and the model is retrained.
+  </p>
+
+  {% if result %}
+  {# ── Training result ── #}
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header fw-bold text-white" style="background:#1a5c2e;">
+      Training Complete
+    </div>
+    <div class="card-body">
+      <p class="mb-1">
+        <strong>Trained:</strong> {{ result.trained|length }} student(s)
+      </p>
+      <p class="mb-1 text-muted">
+        <strong>Skipped (no photo):</strong> {{ result.skipped|length }}
+      </p>
+      {% if result.errors %}
+      <p class="mb-2 text-danger">
+        <strong>Errors:</strong> {{ result.errors|length }}
+      </p>
+      <ul class="small text-danger">
+        {% for name, msg in result.errors %}
+        <li><strong>{{ name }}</strong>: {{ msg }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+
+      {% if result.trained %}
+      <p class="small text-muted mt-2">Trained students:</p>
+      <ul class="small">
+        {% for name in result.trained %}<li>{{ name }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+
+      {% if result.skipped %}
+      <details class="mt-2">
+        <summary class="small text-muted" style="cursor:pointer;">
+          Skipped students ({{ result.skipped|length }}) — no photo uploaded
+        </summary>
+        <ul class="small text-muted mt-1">
+          {% for name in result.skipped %}<li>{{ name }}</li>{% endfor %}
+        </ul>
+      </details>
+      {% endif %}
+    </div>
+  </div>
+
+  <a href="{% url 'face_attendance' %}" class="btn fw-bold text-white me-2"
+     style="background:#1a5c2e;">
+    <i class="fa-solid fa-camera me-1"></i>Start Face Attendance
+  </a>
+  <a href="{% url 'face_train' %}" class="btn btn-outline-secondary">
+    Retrain
+  </a>
+
+  {% else %}
+  {# ── Pre-train confirmation ── #}
+  <div class="alert alert-info">
+    <strong>Note:</strong> Only students with an uploaded reference photo will
+    be trained. Go to
+    <a href="{% url 'student_list' %}">Student Records</a> to upload photos first.
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn fw-bold text-white px-4"
+            style="background:#7a1020;">
+      <i class="fa-solid fa-gear me-2"></i>Run Training
+    </button>
+    <a href="{% url 'face_attendance' %}" class="btn btn-outline-secondary ms-2">
+      Skip to Camera
+    </a>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{% if form.instance.pk %}Edit Student{% else %}Add Student{% endif %}{% endblock %}
+{% block content %}
+<div class="container mt-4" style="max-width:720px;">
+
+  <h2 class="fw-bold mb-4">
+    {% if form.instance.pk %}Edit Student{% else %}Add Student{% endif %}
+  </h2>
+
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    {% if form.instance.pk and form.instance.photo %}
+    <div class="mb-3 d-flex align-items-center gap-3">
+      <img src="{{ form.instance.photo.url }}"
+           alt="Current photo"
+           style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:2px solid #dee2e6;">
+      <div class="small text-muted">Current photo. Upload a new one below to replace it.</div>
+    </div>
+    {% endif %}
+
+    {{ form.as_p }}
+
+    <div class="mt-3">
+      <button class="btn btn-primary">
+        {% if form.instance.pk %}Save Changes{% else %}Add Student{% endif %}
+      </button>
+      <a href="{% url 'student_list' %}" class="btn btn-outline-secondary ms-2">Cancel</a>
+    </div>
+  </form>
+
+</div>
+{% endblock %}
